@@ -1,171 +1,169 @@
-let allTasks = JSON.parse(localStorage.getItem('tasks')) || [];
+let allTasks = [];
 let valueInput = '';
 let input = null;
 
-window.onload = function init () {
-    input = document.getElementById('add_task');
-    input.addEventListener('change', updateValue);
-    render()
+window.onload = async () => {
+	input = document.getElementById('add_task');
+	input.addEventListener('change', updateValue);
+	const resp = await fetch('http://localhost:5000/allTasks', { method: 'GET' });
+	let result = await resp.json();
+	allTasks = result.data;
+	render();
 }
 
-onClickButton = () => {
-    allTasks.push({
-        text: valueInput,
-        isDone: false
-    });
-
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
-
-    valueInput = '';
-    input.value = '';
-
-    render ();
+const onClickButton = async () => {
+	const resp = await fetch('http://localhost:5000/createTask', {
+		method: 'POST',
+		headers: {
+			"Content-Type": 'application/json; charset=utf-8',
+			'Access-Control-Allow-Origin': '*'
+		},
+		body: JSON.stringify({
+			text: valueInput,
+			isCheck: false
+		})
+	});
+	let result = await resp.json();
+	allTasks = result.data;
+	valueInput = '';
+	input.value = '';
+	render();
 }
 
-onClickButtonAll = () => {
-    allTasks = []
-
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
-
-    render ();
+const onClickButtonAll = () => {
+	allTasks.map(async item => {
+		const resp = await fetch(`http://localhost:5000/deleteTask?id=${item.id}`, { method: 'DELETE' });
+		const result = await resp.json();
+		allTasks = result.data;
+		render();
+	});
 }
 
-updateValue = (event) => {
-    valueInput = event.target.value;
+const updateValue = (event) => {
+	valueInput = event.target.value;
 }
 
-updateEditValue = (event) => {
-    valueEditInput = event.target.value;
+const updateEditValue = (event) => {
+	valueEditInput = event.target.value;
 }
 
-onChangeCheckbox = (index) => {
-    allTasks[index].isDone = !allTasks[index].isDone;
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
-
-
-    render();
+const onChangeCheckbox = async (index) => {
+	allTasks[index].isCheck = !allTasks[index].isCheck;
+	const resp = await fetch(`http://localhost:5000/updateTask`, {
+		method: 'PATCH',
+		headers: {
+			"Content-Type": 'application/json; charset=utf-8',
+			'Access-Control-Allow-Origin': '*'
+		},
+		body: JSON.stringify({
+			_id: allTasks[index]._id,
+			isCheck: allTasks[index].isCheck
+		})
+	});
+	let result = await resp.json();
+	allTasks = result.data;
+	render();
 }
 
-onChangeTask = (index) => {
-    allTasks[index].text = valueEditInput;
-    localStorage.setItem('tasks', JSON.stringify(allTasks))
-    valueEditInput = '';
-
-    render();
+const onChangeTask = async (index) => {
+	const resp = await fetch(`http://localhost:5000/updateTask`, {
+		method: 'PATCH',
+		headers: {
+			"Content-Type": 'application/json; charset=utf-8',
+			'Access-Control-Allow-Origin': '*'
+		},
+		body: JSON.stringify({
+			_id: allTasks[index]._id,
+			text: valueEditInput,
+		})
+	});
+	let result = await resp.json();
+	allTasks = result.data;
+	valueEditInput = '';
+	render();
 }
 
-editTask = (index) => {
-    const activeContainer = document.getElementById(`task_${index}`); // взял контейнер, в котором находится нужная задача
+const editTask = (index) => {
+	const activeContainer = document.getElementById(`task_${index}`);
 
-    // const taskEditValue = document.createElement('div');
-    // taskEditValue.className = 'task_value';
-    // activeContainer.appendChild(taskEditValue);
+	while (activeContainer.firstChild) {
+		activeContainer.removeChild(activeContainer.firstChild);
+	}
+	const valueEditInput = allTasks[index].text;
+	const editInput = document.createElement('input');
+	editInput.type = 'text';
+	editInput.value = valueEditInput;
+	editInput.addEventListener('change', updateEditValue);
+	activeContainer.appendChild(editInput);
+	const imageDone = document.createElement('img');
+	imageDone.src = 'img/done.svg';
+	activeContainer.appendChild(imageDone);
+	imageDone.onclick = () => {
+		editInput.value = '';
+		onChangeTask(index)
+	}
+	const imageBack = document.createElement('img');
+	imageBack.src = 'img/back.svg';
+	activeContainer.appendChild(imageBack);
+	imageBack.onclick = () => {
+		valueEditInput = '';
+		render();
+	}
 
-    // const taskEditButtons = document.createElement('div'); 
-    // taskEditButtons.className = 'task_buttons';
-    // activeContainer.appendChild(taskEditButtons);
-
-    while(activeContainer.firstChild) {                               // удалил все элементы, чтобы отрисовать новые
-        activeContainer.removeChild(activeContainer.firstChild);
-    }
-
-    let valueEditInput = allTasks[index].text;                        // переменной, которая отображает значение нового инпута, присваиваем старый текст
-    let editInput = document.createElement('input');                  // создаю новый инпут
-    editInput.type = 'text';                                          // добавляю инпуту тип текст                                      
-    editInput.value = valueEditInput;                                 // добавляю инпуту для отображения текст задачи, который нужно изменить
-    editInput.addEventListener('change', updateEditValue);            // добавляю инпуту прослушку события по изменению
-    activeContainer.appendChild(editInput);                           // добавляю инпут в разметку, в контейнер
-
-    const imageDone = document.createElement('img');                  // создал тэг картинки для сохранения редактирования
-    imageDone.src = 'img/done.svg';
-    activeContainer.appendChild(imageDone);                           // добавляю картинку в разметку, в контейнер
-    imageDone.onclick = () =>  {                                      // добавляю картинке событие по клику
-        editInput.value = '';
-        onChangeTask(index)
-    }
-
-    const imageBack = document.createElement('img');                  
-    imageBack.src = 'img/back.svg';
-    activeContainer.appendChild(imageBack);                           
-    imageBack.onclick = () =>  {                                      
-        valueEditInput = '';
-        render();
-    }
-    
 }
 
-deleteTask = (index) => {
-    allTasks.splice(index, 1)
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
-
-    render();
+const deleteTask = async (index) => {
+	const resp = await fetch(`http://localhost:5000/deleteTask?_id=${allTasks[index]._id}`, { method: 'DELETE' });
+	let result = await resp.json();
+	allTasks = result.data;
+	render();
 }
 
-render = () => {
-    const contentBlock = document.getElementById('content_page'); // взял из штмл див для контента
+const render = () => {
+	const contentBlock = document.getElementById('content_page');
 
-    while(contentBlock.firstChild) {                              // перед добавлением нового элемета в этот див,
-        contentBlock.removeChild(contentBlock.firstChild);        // очищаем его от старых элементов, чтобы старые элементы не 
-    }                                                             // дублировались при отрисовке
+	while (contentBlock.firstChild) {
+		contentBlock.removeChild(contentBlock.firstChild);
+	}
 
-    allTasks.sort((a, b) => {
-        if(a.isDone > b.isDone) {
-            return 1;
-        }
+	allTasks.sort((a, b) =>
+		b.isCheck > a.isCheck ? -1 : b.isCheck < a.isCheck ? 1 : 0
+	);
 
-        if(a.isDone < b.isDone) {
-            return -1;
-        }
+	allTasks.map((item, index) => {
+		const { text, isCheck, id } = item;
+		const container = document.createElement('div');
+		container.id = `task_${index}`;
+		container.className = 'task_container';
+		const taskValue = document.createElement('div');
+		taskValue.className = 'task_value';
+		container.appendChild(taskValue);
+		const taskButtons = document.createElement('div');
+		taskButtons.className = 'task_buttons';
+		container.appendChild(taskButtons);
+		const checkbox = document.createElement('input');
+		checkbox.type = 'checkbox';
+		checkbox.checked = item.isCheck;
+		taskValue.appendChild(checkbox);
+		checkbox.onchange = () => onChangeCheckbox(index)
 
-        return 0;
-    })
+		const textTag = document.createElement('p');
+		textTag.innerText = text;
+		textTag.className = isCheck ? 'task_text done_task' : 'text_task';
+		taskValue.appendChild(textTag);
+		const imageEdit = document.createElement('img');
+		imageEdit.src = 'img/edit.svg';
 
-    localStorage.setItem('tasks', JSON.stringify(allTasks));
+		if (!isCheck) {
+			taskButtons.appendChild(imageEdit);
+		}
 
-    allTasks.map((item, index) => {
-        const container = document.createElement('div');          // создал див для новой задачи
-        container.id = `task_${index}`;                           // присвоил этому диву уникальный айди
-        container.className = 'task_container';
+		imageEdit.onclick = () => editTask(index)
 
-        const taskValue = document.createElement('div');          // создал див для новой задачи
-        taskValue.className = 'task_value';
-        container.appendChild(taskValue);
-
-        const taskButtons = document.createElement('div');          // создал див для новой задачи
-        taskButtons.className = 'task_buttons';
-        container.appendChild(taskButtons);
-
-        const checkbox = document.createElement('input');         // создал для новой задачи инпут для флага выполнено/не выполнено
-        checkbox.type = 'checkbox';                               
-        checkbox.checked = item.isDone;
-        taskValue.appendChild(checkbox);
-        checkbox.onchange = function () {
-            onChangeCheckbox(index)
-        }
-
-        const text = document.createElement('p');
-        text.innerText = item.text;
-        text.className = item.isDone ? 'task_text done_task' : 'text_task';
-        taskValue.appendChild(text);
-
-        const imageEdit = document.createElement('img');
-        imageEdit.src = 'img/edit.svg';
-        if(!item.isDone) {
-            taskButtons.appendChild(imageEdit);
-        }
-        imageEdit.onclick = function () {
-            editTask(index)
-        }
-
-        const imageDelete = document.createElement('img');
-        imageDelete.src = 'img/close.svg';
-        taskButtons.appendChild(imageDelete);
-        imageDelete.onclick = function () {
-            deleteTask(index);
-        }
-
-        // item.isDone ? contentBlock.append(container) : contentBlock.prepend(container);
-
-        contentBlock.appendChild(container);
-    })
+		const imageDelete = document.createElement('img');
+		imageDelete.src = 'img/close.svg';
+		taskButtons.appendChild(imageDelete);
+		imageDelete.onclick = () => deleteTask(index);
+		contentBlock.appendChild(container);
+	})
 }
