@@ -6,7 +6,7 @@ window.onload = async () => {
 	input = document.getElementById('add_task');
 	input.addEventListener('change', updateValue);
 	const resp = await fetch('http://localhost:5000/allTasks', { method: 'GET' });
-	let result = await resp.json();
+	const result = await resp.json();
 	allTasks = result.data;
 	render();
 }
@@ -23,7 +23,7 @@ const onClickButton = async () => {
 			isCheck: false
 		})
 	});
-	let result = await resp.json();
+	const result = await resp.json();
 	allTasks = result.data;
 	valueInput = '';
 	input.value = '';
@@ -48,7 +48,8 @@ const updateEditValue = (event) => {
 }
 
 const onChangeCheckbox = async (index) => {
-	allTasks[index].isCheck = !allTasks[index].isCheck;
+	const {_id, text, isCheck} = allTasks[index];
+	isCheck = !isCheck;
 	const resp = await fetch(`http://localhost:5000/updateTask`, {
 		method: 'PATCH',
 		headers: {
@@ -56,11 +57,11 @@ const onChangeCheckbox = async (index) => {
 			'Access-Control-Allow-Origin': '*'
 		},
 		body: JSON.stringify({
-			_id: allTasks[index]._id,
-			isCheck: allTasks[index].isCheck
+			_id: _id,
+			isCheck: isCheck
 		})
 	});
-	let result = await resp.json();
+	const result = await resp.json();
 	allTasks = result.data;
 	render();
 }
@@ -77,7 +78,7 @@ const onChangeTask = async (index) => {
 			text: valueEditInput,
 		})
 	});
-	let result = await resp.json();
+	const result = await resp.json();
 	allTasks = result.data;
 	valueEditInput = '';
 	render();
@@ -114,7 +115,7 @@ const editTask = (index) => {
 
 const deleteTask = async (index) => {
 	const resp = await fetch(`http://localhost:5000/deleteTask?_id=${allTasks[index]._id}`, { method: 'DELETE' });
-	let result = await resp.json();
+	const result = await resp.json();
 	allTasks = result.data;
 	render();
 }
@@ -131,7 +132,7 @@ const render = () => {
 	);
 
 	allTasks.map((item, index) => {
-		const { text, isCheck, id } = item;
+		const { text, isCheck } = item;
 		const container = document.createElement('div');
 		container.id = `task_${index}`;
 		container.className = 'task_container';
@@ -143,9 +144,9 @@ const render = () => {
 		container.appendChild(taskButtons);
 		const checkbox = document.createElement('input');
 		checkbox.type = 'checkbox';
-		checkbox.checked = item.isCheck;
+		checkbox.checked = isCheck;
 		taskValue.appendChild(checkbox);
-		checkbox.onchange = () => onChangeCheckbox(index)
+		checkbox.onchange = () => onChangeCheckbox(index);
 
 		const textTag = document.createElement('p');
 		textTag.innerText = text;
