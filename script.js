@@ -48,7 +48,7 @@ const updateEditValue = (event) => {
 }
 
 const onChangeCheckbox = async (index) => {
-	const {_id, text, isCheck} = allTasks[index];
+	const {_id, isCheck} = allTasks[index];
 	isCheck = !isCheck;
 	const resp = await fetch(`http://localhost:5000/updateTask`, {
 		method: 'PATCH',
