@@ -48,7 +48,7 @@ const updateEditValue = (event) => {
 }
 
 const onChangeCheckbox = async (index) => {
-	const {_id, isCheck} = allTasks[index];
+	const { _id, isCheck } = allTasks[index];
 	isCheck = !isCheck;
 	const resp = await fetch(`http://localhost:5000/updateTask`, {
 		method: 'PATCH',
@@ -57,8 +57,8 @@ const onChangeCheckbox = async (index) => {
 			'Access-Control-Allow-Origin': '*'
 		},
 		body: JSON.stringify({
-			_id: _id,
-			isCheck: isCheck
+			_id,
+			isCheck
 		})
 	});
 	const result = await resp.json();
