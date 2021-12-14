@@ -60,6 +60,7 @@ button:hover {
 #content_page {
     width: 70%;
 }
+
 .task_container {
     display: flex;
     align-items: center;
